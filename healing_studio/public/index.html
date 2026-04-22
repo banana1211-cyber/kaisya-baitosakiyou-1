@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Healing Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08090e;
+      --surface: #0f1018;
+      --surface2: #161820;
+      --surface3: #1e2028;
+      --border: #1e2235;
+      --border2: #2a2e45;
+      --teal: #4db8c8;
+      --teal-dim: rgba(77,184,200,0.1);
+      --gold: #c9a96e;
+      --gold-dim: rgba(201,169,110,0.1);
+      --indigo: #4a6bc8;
+      --text: #d8e0f0;
+      --text2: #5a6880;
+      --text3: #3a4255;
+      --accent: #e8ff47;
+      --red: rgba(248,113,113,0.7);
+      --red-dim: rgba(248,113,113,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 10% 20%, rgba(74,107,200,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, rgba(77,184,200,0.04) 0%, transparent 50%);
+    }
+
+    /* ヘッダー */
+    header {
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,9,14,0.9);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 19px; font-weight: 300;
+      letter-spacing: 0.2em; color: var(--teal);
+    }
+    .logo span {
+      font-size: 9px; color: var(--text2);
+      display: block; letter-spacing: 0.45em;
+      font-family: 'Noto Sans JP', sans-serif;
+      margin-top: 2px;
+    }
+
+    /* タブ */
+    .tabs {
+      display: flex; gap: 4px;
+    }
+    .tab {
+      font-size: 12px; color: var(--text2);
+      background: none; border: 1px solid var(--border);
+      border-radius: 5px; padding: 6px 14px;
+      cursor: pointer; letter-spacing: 0.08em;
+      font-family: 'Noto Sans JP', sans-serif;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--teal); border-color: var(--teal); }
+    .tab.active { color: var(--teal); border-color: var(--teal); background: var(--teal-dim); }
+
+    /* ページ */
+    .container { max-width: 820px; margin: 0 auto; padding: 32px 20px 80px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ステップ表示 */
+    .steps {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 28px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; letter-spacing: 0.08em;
+    }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--text2);
+      transition: all 0.3s; flex-shrink: 0;
+    }
+    .step-num.active { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+    .step-num.done { border-color: var(--teal); background: var(--teal); color: var(--bg); }
+    .step-label { color: var(--text2); font-size: 11px; }
+    .step-label.active { color: var(--text); }
+    .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 12px; min-width: 20px; }
+
+    /* セクションラベル */
+    .sec-label {
+      font-size: 10px; letter-spacing: 0.4em;
+      color: var(--teal); text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* カード */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:focus-within { border-color: var(--border2); }
+
+    /* テキストエリア共通 */
+    textarea, .srt-output {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; color: var(--text); font-size: 14px;
+      line-height: 1.9; outline: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--border2); }
+    textarea::placeholder { color: var(--text3); font-size: 13px; }
+    textarea { resize: vertical; }
+    #healing-input { min-height: 180px; }
+    #result-text { min-height: 200px; resize: vertical; }
+
+    .srt-output {
+      min-height: 160px; resize: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; line-height: 1.7;
+      color: var(--text2);
+    }
+
+    .hint-text { font-size: 12px; color: var(--text2); margin-top: 8px; line-height: 1.7; }
+    .char-count { font-size: 11px; color: var(--text3); text-align: right; margin-top: 6px; }
+
+    /* ボタン */
+    .btn {
+      padding: 10px 20px; border-radius: 8px;
+      border: 1px solid var(--border2); background: transparent;
+      color: var(--text); font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
+    }
+    .btn:hover { background: var(--surface3); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--indigo), var(--teal));
+      border-color: transparent; color: #fff; font-weight: 500;
+    }
+    .btn.primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(77,184,200,0.2); }
+    .btn.gold {
+      background: var(--accent); color: #111;
+      border-color: transparent; font-weight: 500;
+    }
+    .btn.gold:hover { background: #d4e83a; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    /* 結果エリア */
+    .result-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 10px;
+    }
+    .copy-btn {
+      background: none; border: 1px solid var(--border2);
+      color: var(--text2); border-radius: 5px;
+      padding: 5px 14px; font-size: 12px; cursor: pointer;
+      transition: all 0.2s; font-family: 'Noto Sans JP', sans-serif;
+    }
+    .copy-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .copy-btn.primary-copy { border-color: var(--teal); color: var(--teal); }
+    .copy-btn.primary-copy:hover { background: var(--teal); color: var(--bg); }
+
+    /* SRT設定グリッド */
+    .settings-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; color: var(--text2); }
+    .field input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 14px;
+      padding: 8px 12px; font-family: 'Noto Sans JP', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--border2); }
+
+    /* SRT統計 */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px; margin-bottom: 12px;
+    }
+    .stat {
+      background: var(--surface2); border-radius: 8px;
+      padding: 10px 14px; border: 1px solid var(--border);
+    }
+    .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+    .stat-value { font-size: 18px; font-weight: 500; color: var(--text); }
+
+    .hint-srt {
+      margin-top: 10px; font-size: 12px; color: var(--text2);
+      background: var(--surface2); border-radius: 8px;
+      padding: 10px 14px; line-height: 1.9;
+      border: 1px solid var(--border);
+    }
+    .hint-tag {
+      font-size: 10px; padding: 1px 7px; border-radius: 20px;
+      font-weight: 500; display: inline-block; margin-right: 6px;
+    }
+    .hint-tag.jump { background: rgba(77,184,200,0.12); color: var(--teal); }
+    .hint-tag.silent { background: var(--gold-dim); color: var(--gold); }
+    .hint-srt code {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px;
+    }
+
+    .save-guide {
+      font-size: 12px; color: var(--text2); margin-top: 12px; line-height: 1.9;
+    }
+    .save-guide ol { padding-left: 1.4em; }
+    .save-guide code {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px;
+    }
+
+    /* ローディング */
+    .loading-wrap { display: none; text-align: center; padding: 48px; }
+    .loading-ring {
+      width: 40px; height: 40px; border: 2px solid var(--border);
+      border-top-color: var(--teal); border-radius: 50%;
+      animation: spin 1s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 12px; color: var(--text2); letter-spacing: 0.2em; }
+
+    /* RAGページ */
+    .rag-info {
+      background: var(--teal-dim); border: 1px solid rgba(77,184,200,0.15);
+      border-radius: 10px; padding: 14px 18px;
+      font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 20px;
+    }
+    .rag-info strong { color: var(--teal); }
+    .rag-form { display: flex; gap: 8px; margin-bottom: 6px; }
+    .rag-input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px; color: var(--text);
+      font-size: 13px; outline: none; font-family: 'Noto Sans JP', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .rag-input:focus { border-color: var(--border2); }
+    .rag-input::placeholder { color: var(--text3); }
+    .rag-add-btn {
+      background: var(--indigo); color: #fff; border: none;
+      border-radius: 6px; padding: 10px 18px; cursor: pointer;
+      font-size: 13px; font-family: 'Noto Sans JP', sans-serif;
+      white-space: nowrap; transition: background 0.2s;
+    }
+    .rag-add-btn:hover { background: #5a7cd8; }
+    .rag-hint { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+    .rag-count { font-size: 11px; color: var(--text2); letter-spacing: 0.15em; margin-bottom: 10px; }
+    .rag-list { display: flex; flex-direction: column; gap: 6px; }
+    .rag-item {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px; gap: 10px;
+    }
+    .rag-num { font-size: 11px; color: var(--teal); flex-shrink: 0; padding-top: 2px; }
+    .rag-text { font-size: 13px; flex: 1; line-height: 1.6; }
+    .rag-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; transition: color 0.2s; }
+    .rag-del:hover { color: var(--red); }
+    .rag-empty {
+      text-align: center; color: var(--text3); font-size: 13px;
+      padding: 28px; border: 1px dashed var(--border); border-radius: 8px;
+    }
+    .rag-clear-area { text-align: right; margin-top: 12px; }
+    .rag-clear-btn {
+      background: none; border: 1px solid rgba(248,113,113,0.2);
+      color: var(--red); border-radius: 4px; padding: 4px 12px;
+      font-size: 11px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+      transition: all 0.2s;
+    }
+    .rag-clear-btn:hover { background: var(--red-dim); border-color: var(--red); }
+
+    /* NGタグ */
+    .ng-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .ng-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--red-dim); border: 1px solid rgba(248,113,113,0.2);
+      color: var(--red); border-radius: 4px; padding: 3px 9px; font-size: 12px;
+    }
+    .ng-tag button { background: none; border: none; color: inherit; cursor: pointer; font-size: 13px; padding: 0; }
+
+    /* システムNGパネル */
+    #system-ng-panel {
+      display: none; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px; margin-bottom: 14px;
+      max-height: 280px; overflow-y: auto;
+    }
+
+    /* トースト */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--surface2); border: 1px solid var(--teal);
+      color: var(--teal); border-radius: 8px; padding: 10px 22px;
+      font-size: 13px; opacity: 0; transition: all 0.3s;
+      pointer-events: none; white-space: nowrap; z-index: 200;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .badge {
+      display: inline-block; font-size: 10px; padding: 2px 7px;
+      border-radius: 20px; background: var(--teal-dim);
+      color: var(--teal); margin-left: 8px; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Healing Studio
+    <span>HEALING TEXT MAKER</span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-main" onclick="showPage('main')">✦ 生成</button>
+    <button class="tab" id="tab-srt" onclick="showPage('srt')">🎬 SRT化</button>
+    <button class="tab" id="tab-rag" onclick="showPage('rag')">⚙ RAG設定</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ===== 生成ページ ===== -->
+  <div class="page active" id="page-main">
+
+    <!-- ステップ表示 -->
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num active" id="s1">1</div>
+        <div class="step-label active">NotebookLM貼付</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-num" id="s2">2</div>
+        <div class="step-label">GPT-4o整形</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-num" id="s3">3</div>
+        <div class="step-label">SRT化</div>
+      </div>
+    </div>
+
+    <!-- STEP1 入力 -->
+    <div class="sec-label">Step 1 — NotebookLM の内容を貼り付け</div>
+    <div class="card">
+      <textarea id="healing-input"
+        placeholder="NotebookLMでチャットして生成したヒーリング内容をここに貼り付けてください。"></textarea>
+      <p class="hint-text">※ NotebookLMのチャット結果をそのままコピー＆ペーストしてください</p>
+      <div class="btn-row">
+        <button class="btn primary" onclick="generate()" id="gen-btn">✦ ヒーリング文を生成する（約1000文字）</button>
+      </div>
+    </div>
+
+    <!-- ローディング -->
+    <div class="loading-wrap" id="loading">
+      <div class="loading-ring"></div>
+      <div class="loading-text">ヒーリング文を生成しています...</div>
+    </div>
+
+    <!-- STEP2 結果 -->
+    <div id="result-area" style="display:none;">
+      <div class="sec-label">Step 2 — 生成されたヒーリング文</div>
+      <div class="card">
+        <div class="result-header">
+          <span style="font-size:11px;letter-spacing:0.3em;color:var(--teal);">✦ HEALING TEXT</span>
+          <div style="display:flex;gap:8px;">
+            <button class="copy-btn" onclick="copyResult()">コピー</button>
+            <button class="copy-btn primary-copy" onclick="goToSrt()">🎬 SRT化へ →</button>
+          </div>
+        </div>
+        <textarea id="result-text" readonly></textarea>
+        <div class="char-count" id="char-count"></div>
+      </div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn" onclick="resetAll()" style="font-size:12px;color:var(--text2);">← やり直す</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== SRTページ ===== -->
+  <div class="page" id="page-srt">
+
+    <div class="sec-label">Step 3 — ヒーリング文をSRT字幕に変換</div>
+
+    <div class="card">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+        生成ページで整形した文章が自動で入ります。直接編集もできます。
+      </div>
+      <textarea id="srt-input" min-height="180px" style="min-height:180px;"
+        placeholder="ヒーリング文をここに貼り付けるか、生成ページから「SRT化へ」ボタンで自動転記されます。"
+        oninput="updateSrtCharCount()"></textarea>
+      <div class="char-count" id="srt-char-count">0 文字 / 0 行</div>
+
+      <div class="hint-srt" style="margin-top:12px;">
+        <div style="margin-bottom:6px;">
+          <span class="hint-tag jump">時刻ジャンプ</span>
+          <code>※1:30</code> — テロップなし。次を 1分30秒 から開始
+        </div>
+        <div>
+          <span class="hint-tag silent">無音区間</span>
+          <code>※1:30※</code> — 現在時刻から 1分30秒 を無音として追加
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label" style="margin-bottom:12px;">SRT設定</div>
+      <div class="settings-grid">
+        <div class="field">
+          <label>短いテロップ（〜19文字）の秒数</label>
+          <input type="number" id="short-sec" value="3" min="1" max="60">
+        </div>
+        <div class="field">
+          <label>長いテロップ（20文字〜）の秒数</label>
+          <input type="number" id="long-sec" value="5" min="1" max="60">
+        </div>
+        <div class="field">
+          <label>開始オフセット（秒）</label>
+          <input type="number" id="offset" value="0" min="0" max="3600">
+        </div>
+        <div class="field">
+          <label>テロップ間ギャップ（秒）</label>
+          <input type="number" id="gap" value="0" min="0" max="10" step="0.5">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn gold" onclick="generateSrt()">🎬 SRTを生成</button>
+      <button class="btn" id="copy-srt-btn" onclick="copySrt()" disabled>全てコピー</button>
+      <button class="btn" id="dl-srt-btn" onclick="downloadSrt()" disabled>ダウンロード .srt</button>
+      <button class="btn" onclick="clearSrt()">クリア</button>
+    </div>
+
+    <div id="srt-result" style="display:none;margin-top:16px;">
+      <div class="stats-grid" id="srt-stats"></div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="result-header">
+          <span style="font-size:11px;letter-spacing:0.3em;color:var(--gold);">🎬 SRT OUTPUT<span class="badge" id="srt-badge"></span></span>
+          <button class="copy-btn" onclick="copySrt()">コピー</button>
+        </div>
+        <textarea class="srt-output" id="srt-output" readonly></textarea>
+        <div class="save-guide">
+          <ol>
+            <li>「ダウンロード .srt」ボタンで直接保存</li>
+            <li>保存できない場合は「全てコピー」→ メモ帳に貼り付け → <code>subtitle.srt</code> で保存（UTF-8）</li>
+            <li>Filmora の「字幕」→「SRTファイルをインポート」で読み込む</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== RAG設定ページ ===== -->
+  <div class="page" id="page-rag">
+
+    <!-- 口調・言葉設定 -->
+    <div class="sec-label">口調・言葉・スタイルを登録</div>
+    <div class="rag-info">
+      <strong>RAG設定とは？</strong><br>
+      ヒーリング文の口調・言葉・スタイルをここで登録します。<br>
+      登録した内容がGPT-4oへの指示として使われ、生成される文章に反映されます。
+    </div>
+    <div class="card">
+      <div class="rag-form">
+        <input type="text" class="rag-input" id="rag-input"
+          placeholder="例：波動・氣・魂などスピリチュアルな言葉を使う"
+          onkeydown="if(event.key==='Enter') addRag()">
+        <button class="rag-add-btn" onclick="addRag()">追加</button>
+      </div>
+      <p class="rag-hint">Enterキーでも追加できます</p>
+      <div class="rag-count" id="rag-count"></div>
+      <div class="rag-list" id="rag-list"></div>
+      <div class="rag-clear-area">
+        <button class="rag-clear-btn" onclick="clearAllRag()">すべて削除</button>
+      </div>
+    </div>
+
+    <!-- NGワード設定 -->
+    <div class="sec-label" style="margin-top:8px;">NGワード設定</div>
+    <div class="card">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.8;">
+        システムに約100個のAI風表現が登録済みです。それ以外に追加したい言葉を登録してください。
+        <button onclick="toggleSystemNg()" style="margin-left:8px;background:none;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 10px;font-size:11px;cursor:pointer;font-family:inherit;">システムNG一覧を見る</button>
+      </p>
+      <div id="system-ng-panel"></div>
+      <div class="rag-form">
+        <input type="text" class="rag-input" id="ng-input"
+          placeholder="例：静か、リラックス、意識"
+          onkeydown="if(event.key==='Enter') addNg()">
+        <button class="rag-add-btn" onclick="addNg()" style="background:rgba(248,113,113,0.3);">追加</button>
+      </div>
+      <p class="rag-hint">Enterキーでも追加できます</p>
+      <div class="rag-count" id="ng-count"></div>
+      <div class="ng-tags" id="ng-tags"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ データ管理 ============
+let ragItems = JSON.parse(localStorage.getItem('hs_rag') || '[]');
+let ngWords  = JSON.parse(localStorage.getItem('hs_ng')  || '[]');
+let srtContent = '';
+
+// ============ ページ切替 ============
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ============ ステップ表示 ============
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('s' + i);
+    if (!el) continue;
+    el.className = 'step-num' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.nextElementSibling.className = 'step-label' + (i === n ? ' active' : '');
+  }
+}
+
+// ============ ヒーリング文生成 ============
+async function generate() {
+  const text = document.getElementById('healing-input').value.trim();
+  if (!text) { showToast('内容を入力してください'); return; }
+
+  const genBtn = document.getElementById('gen-btn');
+  const loading = document.getElementById('loading');
+  const resultArea = document.getElementById('result-area');
+
+  genBtn.disabled = true;
+  loading.style.display = 'block';
+  resultArea.style.display = 'none';
+  setStep(2);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ healingText: text, ragItems, ngWords }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast('エラー：' + (data.error || '生成失敗')); setStep(1); return; }
+
+    const resultEl = document.getElementById('result-text');
+    resultEl.value = data.result;
+    document.getElementById('char-count').textContent = `文字数：${data.result.length.toLocaleString()} 文字`;
+    resultArea.style.display = 'block';
+    setStep(3);
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(e) {
+    showToast('通信エラーが発生しました');
+    setStep(1);
+  } finally {
+    genBtn.disabled = false;
+    loading.style.display = 'none';
+  }
+}
+
+function copyResult() {
+  const t = document.getElementById('result-text').value;
+  navigator.clipboard.writeText(t).then(() => showToast('コピーしました ✓'));
+}
+
+function goToSrt() {
+  const t = document.getElementById('result-text').value;
+  if (!t) { showToast('まず文章を生成してください'); return; }
+  document.getElementById('srt-input').value = t;
+  updateSrtCharCount();
+  showPage('srt');
+  showToast('SRTページに転記しました ✓');
+}
+
+function resetAll() {
+  document.getElementById('healing-input').value = '';
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('result-text').value = '';
+  document.getElementById('char-count').textContent = '';
+  setStep(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============ SRT生成 ============
+function pad2(n) { return String(Math.floor(n)).padStart(2, '0'); }
+function toTC(sec) {
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  const s = Math.floor(sec%60), ms = Math.round((sec-Math.floor(sec))*1000);
+  return pad2(h)+':'+pad2(m)+':'+pad2(s)+','+String(ms).padStart(3,'0');
+}
+function parseDur(str) {
+  const parts = str.trim().split(':').map(Number);
+  if (parts.some(isNaN)) return null;
+  if (parts.length === 2) return parts[0]*60+parts[1];
+  if (parts.length === 3) return parts[0]*3600+parts[1]*60+parts[2];
+  return null;
+}
+function parseLine(line) {
+  const sm = line.match(/^※(.+?)※$/);
+  if (sm) { const d = parseDur(sm[1]); if (d!==null) return { type:'silent', dur:d }; }
+  const jm = line.match(/^※(.+)$/);
+  if (jm) { const t = parseDur(jm[1]); if (t!==null) return { type:'jump', time:t }; }
+  return { type:'text', text:line };
+}
+
+function updateSrtCharCount() {
+  const v = document.getElementById('srt-input').value;
+  const lines = v.split('\n').filter(l => l.trim().length > 0);
+  document.getElementById('srt-char-count').textContent = v.length + ' 文字 / ' + lines.length + ' 行';
+}
+
+function generateSrt() {
+  const raw = document.getElementById('srt-input').value;
+  const shortSec = parseFloat(document.getElementById('short-sec').value) || 3;
+  const longSec  = parseFloat(document.getElementById('long-sec').value)  || 5;
+  const offset   = parseFloat(document.getElementById('offset').value)    || 0;
+  const gap      = parseFloat(document.getElementById('gap').value)       || 0;
+
+  const allLines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (!allLines.length) { showToast('テキストを入力してください'); return; }
+
+  let time=offset, out='', idx=1, longC=0, shortC=0, jumpC=0, silentC=0;
+
+  allLines.forEach(line => {
+    const p = parseLine(line);
+    if (p.type==='jump')   { time=p.time; jumpC++; return; }
+    if (p.type==='silent') { time+=p.dur; silentC++; return; }
+    const dur = p.text.length >= 20 ? longSec : shortSec;
+    p.text.length >= 20 ? longC++ : shortC++;
+    out += idx+'\n'+toTC(time)+' --> '+toTC(time+dur)+'\n'+p.text+'\n\n';
+    time += dur+gap; idx++;
+  });
+
+  if (!out) { showToast('テロップ化できる行がありませんでした'); return; }
+
+  srtContent = out.trimEnd();
+  const totalSec = time-gap;
+  const tm = Math.floor(totalSec/60), ts = Math.round(totalSec%60);
+
+  document.getElementById('srt-stats').innerHTML = [
+    ['テロップ数',(idx-1)+'件'],
+    ['長い（'+longSec+'秒）',longC+'件'],
+    ['短い（'+shortSec+'秒）',shortC+'件'],
+    ['時刻ジャンプ',jumpC+'行'],
+    ['無音区間',silentC+'行'],
+    ['合計尺',tm+'分'+ts+'秒'],
+  ].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div>`).join('');
+
+  document.getElementById('srt-output').value = srtContent;
+  document.getElementById('srt-badge').textContent = (idx-1)+' 件';
+  document.getElementById('srt-result').style.display = 'block';
+  document.getElementById('copy-srt-btn').disabled = false;
+  document.getElementById('dl-srt-btn').disabled = false;
+  document.getElementById('srt-result').scrollIntoView({ behavior:'smooth', block:'start' });
+  showToast('SRTを生成しました ✓');
+}
+
+function copySrt() {
+  if (!srtContent) return;
+  navigator.clipboard.writeText(srtContent).then(() => showToast('コピーしました ✓'));
+}
+
+function downloadSrt() {
+  if (!srtContent) return;
+  const blob = new Blob([srtContent], { type:'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'subtitle.srt';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast('ダウンロードしました ✓');
+}
+
+function clearSrt() {
+  document.getElementById('srt-input').value = '';
+  document.getElementById('srt-result').style.display = 'none';
+  document.getElementById('copy-srt-btn').disabled = true;
+  document.getElementById('dl-srt-btn').disabled = true;
+  srtContent = '';
+  updateSrtCharCount();
+}
+
+// ============ RAG管理 ============
+function saveRag() { localStorage.setItem('hs_rag', JSON.stringify(ragItems)); renderRag(); }
+function renderRag() {
+  const list = document.getElementById('rag-list');
+  const count = document.getElementById('rag-count');
+  count.textContent = `登録済み：${ragItems.length} 件`;
+  if (!ragItems.length) {
+    list.innerHTML = '<div class="rag-empty">まだ登録されていません</div>'; return;
+  }
+  list.innerHTML = ragItems.map((item,i) => `
+    <div class="rag-item">
+      <span class="rag-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="rag-text">${escHtml(item)}</span>
+      <button class="rag-del" onclick="removeRag(${i})">✕</button>
+    </div>`).join('');
+}
+function addRag() {
+  const inp = document.getElementById('rag-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (ragItems.includes(val)) { showToast('既に登録されています'); return; }
+  ragItems.push(val); saveRag(); inp.value=''; showToast('追加しました ✓');
+}
+function removeRag(i) { ragItems.splice(i,1); saveRag(); showToast('削除しました'); }
+function clearAllRag() {
+  if (!confirm('すべてのRAG設定を削除しますか？')) return;
+  ragItems=[]; saveRag(); showToast('すべて削除しました');
+}
+
+// ============ NGワード管理 ============
+function saveNg() { localStorage.setItem('hs_ng', JSON.stringify(ngWords)); renderNg(); }
+function renderNg() {
+  const tags = document.getElementById('ng-tags');
+  const count = document.getElementById('ng-count');
+  count.textContent = `登録済み：${ngWords.length} 件`;
+  if (!ngWords.length) {
+    tags.innerHTML = '<span style="font-size:12px;color:var(--text3);">まだ登録されていません</span>'; return;
+  }
+  tags.innerHTML = ngWords.map((w,i) => `
+    <span class="ng-tag">${escHtml(w)}
+      <button onclick="removeNg(${i})">✕</button>
+    </span>`).join('');
+}
+function addNg() {
+  const inp = document.getElementById('ng-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (ngWords.includes(val)) { showToast('既に登録されています'); return; }
+  ngWords.push(val); saveNg(); inp.value=''; showToast('NGワードを追加しました ✓');
+}
+function removeNg(i) { ngWords.splice(i,1); saveNg(); showToast('削除しました'); }
+
+// ============ システムNG一覧 ============
+const SYSTEM_NG = [
+  { name:"感情の押しつけ系", items:["気づいてください","気づいていきましょう","受け取ってください","受け取っていきます","味わってください","味わっていきましょう","体験してください","実感してください","今この瞬間を","今ここにある","ただそこにいてください","あるがままに","あるがままで"] },
+  { name:"大げさな形容詞", items:["素晴らしい","美しい光","美しい世界","神聖な","神聖さ","純粋な","清らかな","清らかに","豊かさ","深いところ","大切にして"] },
+  { name:"スピリチュアル系カタカナ語", items:["エネルギーフィールド","バイブレーション","バイブス","マインドフル","マインドフルネス","インナー","インナーピース","インナーチャイルド","グラウンディング","センタリング","アセンション","アセンド","ライトボディ","ライトワーカー","チャクラを開く","オーラフィールド","パラレルワールド","次元上昇","ハイヤーセルフ","ハイヤーマインド","ソウルメイト","カルマを解放","トラウマを解放","トラウマを癒す","ブロックを解除","ブロックを外す","量子力学","周波数を上げる","ハートチャクラ","サードアイ","第三の目","アクティベーション","アクティベート"] },
+  { name:"定番ヒーリングフレーズ", items:["今この瞬間に存在してください","ただ在るだけでいい","あなたはすでに完璧です","光に包まれて","白い光が","金色の光が","宇宙とつながって","宇宙と一体となって","すべてはつながっています","大いなる存在","大いなる宇宙","宇宙のエネルギーが流れ込む","内なる平和","内なる光","内なる声","本当の自分","真の自分","魂の声に耳を傾けて","心の扉を開いて","過去を手放して","未来への不安を手放して","ネガティブなエネルギーを手放す","マイナスエネルギーを排出","浄化されていく","浄化の光","クレンジング","心身の浄化","すべての緊張が溶けていく","体の力が抜けていく","ゆっくりと沈んでいく","意識を向けて","意識を集中して","気づきをもたらす","気づきを深める","心と体が一つになる","調和がとれていく","バランスが整う","バランスを取り戻す","癒しのエネルギーが","守護の光","守護されている","あなたは守られています","宇宙が味方しています","引き寄せの法則","豊かさを引き寄せる","感謝のエネルギー","感謝の波動","愛と光を","愛と感謝を","ハートを開いて","悟りの光","悟りへの道","霊的成長","霊的向上","セルフワーク","セルフヒーリング"] },
+  { name:"進行役・AI表現", items:["それでは","さて","まずは","次に","続いて","最後に","はじめに","さっそく","〜をご紹介します","〜を見ていきましょう","ステップ","プロセス","フェーズ","メソッド","ポイント","メリット","実践","活用"] },
+  { name:"締め・まとめ系", items:["以上のことから","このように","いかがでしたか","まとめると","総じて","結論として","最終的に","ことを心がけましょう","ぜひ〜してみてください","参考になれば幸いです","お役に立てれば幸いです"] },
+];
+
+let systemNgOpen = false;
+function toggleSystemNg() {
+  const panel = document.getElementById('system-ng-panel');
+  systemNgOpen = !systemNgOpen;
+  if (systemNgOpen) {
+    panel.style.display = 'block';
+    panel.innerHTML = `<div style="font-size:10px;letter-spacing:0.3em;color:var(--teal);margin-bottom:10px;">システム登録済みNGワード（約100個）</div>` +
+      SYSTEM_NG.map(cat => `
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--teal);margin-bottom:4px;">${escHtml(cat.name)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${cat.items.map(item => `<span style="background:var(--red-dim);border:1px solid rgba(248,113,113,0.15);color:var(--red);border-radius:3px;padding:1px 7px;font-size:11px;">${escHtml(item)}</span>`).join('')}
+          </div>
+        </div>`).join('');
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// ============ ユーティリティ ============
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function escHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 初期化
+renderRag();
+renderNg();
+updateSrtCharCount();
+</script>
+</body>
+</html>
